@@ -9,22 +9,6 @@ var path = require('path');
 var locationModel = require('./models/locationModel');
 var mongoose = require('mongoose');
 var bodyParser = require('body-parser');
-// var passport = require('passport')
-//   , FacebookStrategy = require('passport-facebook').Strategy;
-
-//   passport.use(new FacebookStrategy({
-//       clientID: 443530475777959,
-//       clientSecret: '87fddfd694ebea4b4ac008b9e78c309e',
-//       callbackURL: "http://127.0.0.1:3000/"
-//     },
-//     function(accessToken, refreshToken, profile, done) {
-//       User.findOrCreate(function(err, user) {
-//         if (err) { return done(err); }
-//         done(null, user);
-//       });
-//     }
-//   ));
-
 
 mongoose.connect('mongodb://localhost/locations');
 
@@ -32,9 +16,6 @@ var app = express();
 
 app.configure(function(){
 	app.use(express.cookieParser());
-	// app.use(express.session({ secret: 'keyboard cat' }));
-	// app.use(passport.initialize());
-	// app.use(passport.session());
 })
 
 app.set('port', process.env.PORT || 3000);
@@ -73,29 +54,33 @@ app.get('/inituser' , function (req , res){
 		this.couples = couples
 	};
 
+	var thisDate = new Date();
+	var thisTime = thisDate.getTime();
+	var findTimes = (thisTime - 1800000);
+
 	if(req.query.userGender === 'male'){
-		locationModel.find({gender : 'female'} , function(err, docs){
+		locationModel.find({gender : 'female' , timestamp : { $gte : findTimes}} , function(err, docs){
 			all.push(docs);
 			console.log(err);
 		});
-		locationModel.find({gender : 'female' , single : true} , function(err,docs){
+		locationModel.find({gender : 'female' , single : true , timestamp : { $gte : findTimes}} , function(err,docs){
 			single.push(docs);
 			console.log(err);
 		});
-		locationModel.find({gender : 'female' , single : false} , function(err,docs){
+		locationModel.find({gender : 'female' , single : false , timestamp : { $gte : findTimes}} , function(err,docs){
 			couples.push(docs);
 			console.log(err);
 		})
 	} else {
-		locationModel.find({gender : 'male'} , function(err, docs){
+		locationModel.find({gender : 'male' , timestamp : { $gte : findTimes}} , function(err, docs){
 			all.push(docs);
 			console.log(err);
 		});
-		locationModel.find({gender : 'male' , single : true} , function(err,docs){
+		locationModel.find({gender : 'male' , single : true , timestamp : { $gte : findTimes}} , function(err,docs){
 			single.push(docs);
 			console.log(err);
 		});
-		locationModel.find({gender : 'male' , single : false} , function(err,docs){
+		locationModel.find({gender : 'male' , single : false , timestamp : { $gte : findTimes}} , function(err,docs){
 			couples.push(docs);
 			console.log(err);
 		})
@@ -107,8 +92,6 @@ app.get('/inituser' , function (req , res){
 
 	res.jsonp(allPeople);
 
-	var thisDate = new Date();
-	var thisTime = thisDate.getTime();
 
 	var location = new locationModel({
 		gender             : req.query.userGender,
@@ -116,6 +99,7 @@ app.get('/inituser' , function (req , res){
 		genderPrefOpposite : true,
 		single             : true,
 		events             : req.query.userEvents,
+		groups             : req.query.userGroups,
 		latitude           : req.query.latitude,
 		longitude          : req.query.longitude,
 		timestamp          : thisTime
@@ -140,44 +124,48 @@ app.get('/updateuser' , function (req , res){
 		this.couples = couples
 	};
 
+	var thisDate = new Date();
+	var thisTime = thisDate.getTime();
+	var findTimes = (thisTime - 1800000);
+
 
 	locationModel.find({_id : req.query._id} , function(err , doc){
 		if(doc.gender === 'male' || doc.genderPrefOpposite === true){
-		locationModel.find({gender : 'female' , genderPrefOpposite : true} , function(err, docs){
+		locationModel.find({gender : 'female' , genderPrefOpposite : true , timestamp : { $gte: findTimes}} , function(err, docs){
 			all.push(docs);
 			console.log(err);
 		});
-		locationModel.find({gender : 'female' , genderPrefOpposite : true , single : true} , function(err,docs){
+		locationModel.find({gender : 'female' , genderPrefOpposite : true , single : true , timestamp : { $gte: findTimes}} , function(err,docs){
 			single.push(docs);
 			console.log(err);
 		});
-		locationModel.find({gender : 'female' , genderPrefOpposite : true , single : false} , function(err,docs){
+		locationModel.find({gender : 'female' , genderPrefOpposite : true , single : false , timestamp : { $gte: findTimes}} , function(err,docs){
 			couples.push(docs);
 			console.log(err);
 		});
 	} else if (doc.gender === 'male' || doc.genderPrefOpposite === false){
-		locationModel.find({gender : 'male' , genderPrefOpposite : false} , function(err, docs){
+		locationModel.find({gender : 'male' , genderPrefOpposite : false , timestamp : { $gte: findTimes}} , function(err, docs){
 			all.push(docs);
 			console.log(err);
 		});
-		locationModel.find({gender : 'male' , genderPrefOpposite : false , single : true} , function(err,docs){
+		locationModel.find({gender : 'male' , genderPrefOpposite : false , single : true , timestamp : { $gte: findTimes}} , function(err,docs){
 			single.push(docs);
 			console.log(err);
 		});
-		locationModel.find({gender : 'male' , genderPrefOpposite : false , single : false} , function(err,docs){
+		locationModel.find({gender : 'male' , genderPrefOpposite : false , single : false , timestamp : { $gte: findTimes}} , function(err,docs){
 			couples.push(docs);
 			console.log(err);
 		});
 	} else if (doc.gender === 'female' || doc.genderPrefOpposite === true){
-		locationModel.find({gender : 'male' , genderPrefOpposite : true} , function(err, docs){
+		locationModel.find({gender : 'male' , genderPrefOpposite : true , timestamp : { $gte: findTimes}} , function(err, docs){
 			all.push(docs);
 			console.log(err);
 		});
-		locationModel.find({gender : 'male' , genderPrefOpposite : true , single : true} , function(err,docs){
+		locationModel.find({gender : 'male' , genderPrefOpposite : true , single : true , timestamp : { $gte: findTimes}} , function(err,docs){
 			single.push(docs);
 			console.log(err);
 		});
-		locationModel.find({gender : 'male' , genderPrefOpposite : true , single : false} , function(err,docs){
+		locationModel.find({gender : 'male' , genderPrefOpposite : true , single : false , timestamp : { $gte: findTimes}} , function(err,docs){
 			couples.push(docs);
 			console.log(err);
 		});
@@ -206,6 +194,7 @@ app.get('/updateuser' , function (req , res){
 
 	var user   = {_id        : req.query._id};
 	var update = { events    : req.query.userEvents,
+				   groups    : req.query.userGroups,
 				   latitude  : req.query.latitude,
 				   longitude : req.query.longitude,
 				   timestamp : thisTime};
