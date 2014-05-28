@@ -10,7 +10,12 @@ var locationModel = require('./models/locationModel');
 var mongoose = require('mongoose');
 var bodyParser = require('body-parser');
 
+if(global.process.env.MONGOHQ_URL){
+  mongoose.connect(global.process.env.MONGOHQ_URL);
+}else{
 mongoose.connect('mongodb://localhost/locations');
+}
+
 
 var app = express();
 
