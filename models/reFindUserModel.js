@@ -1,15 +1,14 @@
 var mongoose = require('mongoose');
 
-var locationSchema = new mongoose.Schema({
+var reFindUserSchema = new mongoose.Schema({
 	gender             : String,
-	_id                : Number,
+	id                 : Number,
 	genderPrefOpposite : Boolean,
 	single             : Boolean,
-	events             :[String],
-	groups             :[String],
+	events             : Array,
 	latitude           : Number,
 	longitude          : Number,
 	timestamp          : Number
 });
 
-var locationModel = module.exports = mongoose.model('location' , locationSchema)
+var reFindUserModel = module.exports = mongoose.model('reFindUser' , reFindUserSchema)

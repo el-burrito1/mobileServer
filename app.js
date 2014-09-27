@@ -6,14 +6,14 @@
 var express = require('express');
 var http = require('http');
 var path = require('path');
-var locationModel = require('./models/locationModel');
+var reFindUserModel = require('./models/reFindUserModel');
 var mongoose = require('mongoose');
 var bodyParser = require('body-parser');
 
 if(global.process.env.MONGOHQ_URL){
   mongoose.connect(global.process.env.MONGOHQ_URL);
 }else{
-mongoose.connect('mongodb://localhost/locations');
+mongoose.connect('mongodb://localhost/reFindUsers');
 }
 
 
@@ -47,70 +47,27 @@ app.get('/' , function (req , res){
 });
 
 
-app.get('/inituser' , function (req , res){
+app.get('/createuser' , function (req , res){
 	console.log(req.query);
-	var all     = []; 
-	var single  = [];
-	var couples = [];
 
-	function People(all,single,couples){
-		this.all     = all,
-		this.single  = single,
-		this.couples = couples
-	};
+	res.jsonp('user has been created');
 
-	var thisDate = new Date();
-	var thisTime = thisDate.getTime();
-	var findTimes = (thisTime - 1800000);
+	var date = new Date();
+	var time = date.getTime();
 
-	if(req.query.userGender === 'male'){
-		locationModel.find({gender : 'female' , timestamp : { $gte : findTimes}} , function(err, docs){
-			all.push(docs);
-			console.log(err);
-		});
-		locationModel.find({gender : 'female' , single : true , timestamp : { $gte : findTimes}} , function(err,docs){
-			single.push(docs);
-			console.log(err);
-		});
-		locationModel.find({gender : 'female' , single : false , timestamp : { $gte : findTimes}} , function(err,docs){
-			couples.push(docs);
-			console.log(err);
-		})
-	} else {
-		locationModel.find({gender : 'male' , timestamp : { $gte : findTimes}} , function(err, docs){
-			all.push(docs);
-			console.log(err);
-		});
-		locationModel.find({gender : 'male' , single : true , timestamp : { $gte : findTimes}} , function(err,docs){
-			single.push(docs);
-			console.log(err);
-		});
-		locationModel.find({gender : 'male' , single : false , timestamp : { $gte : findTimes}} , function(err,docs){
-			couples.push(docs);
-			console.log(err);
-		})
-	};
-
-	var allPeople = new People(all,single,couples);
-
-	console.log(allPeople);
-
-	res.jsonp(allPeople);
-
-
-	var location = new locationModel({
-		gender             : req.query.userGender,
-		_id                : req.query._id,
+	var reFindUser = new reFindUserModel({
+		gender             : req.query.gender,
+		id                 : req.query.ID,
 		genderPrefOpposite : true,
 		single             : true,
-		events             : req.query.userEvents,
-		groups             : req.query.userGroups,
+		events             : req.query.events,
 		latitude           : req.query.latitude,
 		longitude          : req.query.longitude,
-		timestamp          : thisTime
+		timestamp          : time
 	});
-	location.save(function(err,doc){
+	reFindUser.save(function(err,doc){
 		res.send(doc);
+		console.log(doc)
 		console.log(err);
 	});
 });
@@ -118,227 +75,91 @@ app.get('/inituser' , function (req , res){
 app.get('/updateuser' , function (req , res){
 	console.log(req.query);
 
-	var userInfo;
-	var all     = []; 
-	var single  = [];
-	var couples = [];
+	var date = new Date();
+	var time = date.getTime();
 
-	function People(all,single,couples){
-		this.all     = all,
-		this.single  = single,
-		this.couples = couples
-	};
-
-	var thisDate = new Date();
-	var thisTime = thisDate.getTime();
-	var findTimes = (thisTime - 1800000);
-
-
-	locationModel.find({_id : req.query._id} , function(err , doc){
-		if(doc.gender === 'male' || doc.genderPrefOpposite === true){
-		locationModel.find({gender : 'female' , genderPrefOpposite : true , timestamp : { $gte: findTimes}} , function(err, docs){
-			all.push(docs);
-			console.log(err);
-		});
-		locationModel.find({gender : 'female' , genderPrefOpposite : true , single : true , timestamp : { $gte: findTimes}} , function(err,docs){
-			single.push(docs);
-			console.log(err);
-		});
-		locationModel.find({gender : 'female' , genderPrefOpposite : true , single : false , timestamp : { $gte: findTimes}} , function(err,docs){
-			couples.push(docs);
-			console.log(err);
-		});
-	} else if (doc.gender === 'male' || doc.genderPrefOpposite === false){
-		locationModel.find({gender : 'male' , genderPrefOpposite : false , timestamp : { $gte: findTimes}} , function(err, docs){
-			all.push(docs);
-			console.log(err);
-		});
-		locationModel.find({gender : 'male' , genderPrefOpposite : false , single : true , timestamp : { $gte: findTimes}} , function(err,docs){
-			single.push(docs);
-			console.log(err);
-		});
-		locationModel.find({gender : 'male' , genderPrefOpposite : false , single : false , timestamp : { $gte: findTimes}} , function(err,docs){
-			couples.push(docs);
-			console.log(err);
-		});
-	} else if (doc.gender === 'female' || doc.genderPrefOpposite === true){
-		locationModel.find({gender : 'male' , genderPrefOpposite : true , timestamp : { $gte: findTimes}} , function(err, docs){
-			all.push(docs);
-			console.log(err);
-		});
-		locationModel.find({gender : 'male' , genderPrefOpposite : true , single : true , timestamp : { $gte: findTimes}} , function(err,docs){
-			single.push(docs);
-			console.log(err);
-		});
-		locationModel.find({gender : 'male' , genderPrefOpposite : true , single : false , timestamp : { $gte: findTimes}} , function(err,docs){
-			couples.push(docs);
-			console.log(err);
-		});
-	} else if (doc.gender === 'female' || doc.genderPrefOpposite === false){
-			locationModel.find({gender : 'female' , genderPrefOpposite : false} , function(err, docs){
-			all.push(docs);
-			console.log(err);
-		});
-		locationModel.find({gender : 'female' , genderPrefOpposite : false , single : true} , function(err,docs){
-			single.push(docs);
-			console.log(err);
-		});
-		locationModel.find({gender : 'female' , genderPrefOpposite : false , single : false} , function(err,docs){
-			couples.push(docs);
-			console.log(err);
-		});
-	};
-
-		var allPeople = new People(all,single,couples);
-
-		res.jsonp({people : allPeople , currentUser : doc});
-	});
-
-	var thisDate = new Date();
-	var thisTime = thisDate.getTime();
-
-	var user   = {_id        : req.query._id};
-	var update = { events    : req.query.userEvents,
-				   groups    : req.query.userGroups,
-				   latitude  : req.query.latitude,
-				   longitude : req.query.longitude,
-				   timestamp : thisTime};
-
-   locationModel.update(user,update,{multi:true},function(err,numAffected){
-   		console.log(numAffected);
-   		console.log(err);
-   });
-
+	reFindUserModel.findOneAndUpdate({id : req.query.ID} , {$set:{
+		latitude  : req.query.latitude,
+		longitude : req.query.longitude,
+		events    : req.query.events,
+		timestamp : time
+	}},function(err,doc){
+		res.jsonp(doc)
+		console.log(err)
+	})
 });
 
+app.get('/updaterelationship' , function (req,res){
+	console.log(req.query)
 
-///////////////USER UPDATES/////////////////////////////////////
-
-app.get('/updateprefsame' , function (req,res){
-		console.log(req.query);
-
-		var all     = []; 
-		var single  = [];
-		var couples = [];
-
-		function People(all,single,couples){
-			this.all     = all,
-			this.single  = single,
-			this.couples = couples
-		};
-
-		locationModel.update({_id : req.query._id},{genderPrefOpposite: false} , {multi:false} , function(err , numAffected){
-			console.log(numAffected);
-			console.log(err);
-		});
-
-		if(req.query.userGender === 'male'){
-			locationModel.find({gender : 'male' , genderPrefOpposite : false} , function(err,docs){
-			    all.push(docs);
-			    console.log(err);
-			});
-			locationModel.find({gender : 'male' , genderPrefOpposite: false , single : true} , function(err,docs){
-				single.push(docs);
-				console.log(err);
-			});
-			locationModel.find({gender : 'male' , genderPrefOpposite: false , single : false} , function(err,docs){
-				couples.push(docs);
-				console.log(err);
-			})
-		} else if (req.query.userGender === 'female'){
-			locationModel.find({gender : 'female' , genderPrefOpposite : false} , function(err,docs){
-			    all.push(docs);
-			    console.log(err);
-			});
-			locationModel.find({gender : 'female' , genderPrefOpposite: false , single : true} , function(err,docs){
-				single.push(docs);
-				console.log(err);
-			});
-			locationModel.find({gender : 'female' , genderPrefOpposite: false , single : false} , function(err,docs){
-				couples.push(docs);
-				console.log(err);
-			})
-		} 
-
-		var allPeople = new People(all,single,couples);
-		res.jsonp({updatedPref : allPeople});
-});
-
-
-
-app.get('/updateprefopposite' , function (req,res){
-		console.log(req.query);
-
-		var all     = []; 
-		var single  = [];
-		var couples = [];
-
-		function People(all,single,couples){
-			this.all     = all,
-			this.single  = single,
-			this.couples = couples
-		};
-
-		locationModel.update({_id : req.query._id},{genderPrefOpposite: true} , {multi:false} , function(err , numAffected){
-			console.log(numAffected);
-			console.log(err);
-		});
-
-		if(req.query.userGender === 'male'){
-			locationModel.find({gender : 'male' , genderPrefOpposite : true} , function(err,docs){
-			    all.push(docs);
-			    console.log(err);
-			});
-			locationModel.find({gender : 'male' , genderPrefOpposite: true , single : true} , function(err,docs){
-				single.push(docs);
-				console.log(err);
-			});
-			locationModel.find({gender : 'male' , genderPrefOpposite: true , single : false} , function(err,docs){
-				couples.push(docs);
-				console.log(err);
-			})
-		} else if (req.query.userGender === 'female'){
-			locationModel.find({gender : 'female' , genderPrefOpposite : true} , function(err,docs){
-			    all.push(docs);
-			    console.log(err);
-			});
-			locationModel.find({gender : 'female' , genderPrefOpposite: true , single : true} , function(err,docs){
-				single.push(docs);
-				console.log(err);
-			});
-			locationModel.find({gender : 'female' , genderPrefOpposite: true , single : false} , function(err,docs){
-				couples.push(docs);
-				console.log(err);
-			})
-		} 
-
-		var allPeople = new People(all,single,couples);
-		res.jsonp({updatedPref : allPeople});
-
-
-		res.jsonp('opposite updated!');
+	reFindUserModel.update({id:req.query.ID} , {$set:{single:req.query.status}} , function(err,doc){
+		console.log(err)
+		res.jsonp(doc)
+	})
 })
 
-app.get('/updaterelationshipsingle' , function (req,res){
-		console.log(req.query);
-		locationModel.update({_id : req.query._id},{single: true} , {multi:false} , function(err , numAffected){
-			console.log(numAffected);
-			console.log(err);
-		});
-		res.jsonp('single updated!');
-});
+app.get('/updatepreference' , function (req,res){
+	console.log(req.query)
 
-app.get('/updaterelationshipcouple' , function (req,res){
-		console.log(req.query);
-		locationModel.update({_id : req.query._id},{single: false} , {multi:false} , function(err , numAffected){
-			console.log(numAffected);
-			console.log(err);
-		});
-		res.jsonp('couple updated!');
-});
+	reFindUserModel.update({id:req.query.ID} , {$set:{genderPrefOpposite:req.query.preferenceOpposite}} , function(err,doc){
+		console.log(err)
+		res.jsonp(doc)
+	})
+})
 
-///////////////END USER UPDATES/////////////////////////////////////
+app.get('/readall' , function (req,res){
+	reFindUserModel.find({}).find(function(err,docs){
+		console.log(err)
+		res.jsonp(docs)
+	})
+})
 
+app.get('/readsingles' , function (req,res){
+	console.log(req.query)
+	var genderQuery
+	var preferenceOpposite
+
+	if(req.query.gender == 'male'){
+		if(req.query.preferenceOpposite == 'true'){genderQuery='female'}else{genderQuery='male'}
+	} else if (req.query.gender == 'female'){
+		if(req.query.preferenceOpposite == 'true'){genderQuery='male'}else{genderQuery='female'}
+	}
+
+	if(req.query.preferenceOpposite == 'true'){preferenceOpposite=true}else{preferenceOpposite=false}
+
+	reFindUserModel.find({gender:genderQuery,genderPrefOpposite:preferenceOpposite,single:true}).find(function(err,docs){
+		console.log(err)
+		res.jsonp(docs)
+	})
+})
+
+app.get('/readcouples' , function (req,res){
+	console.log(req.query)
+	var genderQuery
+	var preferenceOpposite
+
+	if(req.query.gender == 'male'){
+		if(req.query.preferenceOpposite == 'true'){genderQuery='female'}else{genderQuery='male'}
+	} else if (req.query.gender == 'female'){
+		if(req.query.preferenceOpposite == 'true'){genderQuery='male'}else{genderQuery='female'}
+	}
+
+	if(req.query.preferenceOpposite == 'true'){preferenceOpposite=true}else{preferenceOpposite=false}
+
+	reFindUserModel.find({gender:genderQuery,genderPrefOpposite:preferenceOpposite,single:false}).find(function(err,docs){
+		console.log(err)
+		res.jsonp(docs)
+	})	
+})
+
+app.get('/readevents' , function (req,res){
+	console.log(req.query)
+
+	reFindUserModel.find({events:req.query.events}).find(function(err,docs){
+		console.log(err)
+		res.jsonp(docs)
+	})
+})
 
 
 
